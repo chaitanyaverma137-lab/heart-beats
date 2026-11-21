@@ -63,3 +63,104 @@
 .immersive-art:before,.immersive-art:after{pointer-events:none}
 .immersive-art[style*="background-image"]:before,.immersive-art[style*="background-image"]:after{border-color:#ffffff22}
 .mini-cover{overflow:hidden}
+
+/* Heart Beats v1.0.1 — interactive floating pill dock (replaces the full-width static footer) */
+.player{height:126px;position:fixed;left:50%;right:auto;bottom:22px;transform:translateX(-50%);width:min(1040px,calc(100vw - 300px));min-width:720px;padding:14px 30px;gap:22px;border:1px solid rgba(255,255,255,.22);border-radius:100px;background-color:rgba(23,17,27,.94);background-position:center;background-size:cover;box-shadow:0 18px 55px rgba(0,0,0,.58),inset 0 1px rgba(255,255,255,.16);backdrop-filter:blur(24px) saturate(1.35);z-index:50;overflow:hidden}
+.player:before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(100deg,rgba(12,10,15,.18),rgba(10,9,13,.56));pointer-events:none}
+.player>*{position:relative;z-index:1}
+.player .now-playing{width:34%;min-width:190px;display:flex;align-items:center;gap:17px;text-align:left;background:transparent;border:0;padding:0;color:inherit;cursor:pointer;border-radius:60px;min-height:88px}
+.player .now-playing:hover .now-meta b{color:#e7c4ff}
+.player .mini-cover{width:82px;height:82px;min-width:82px;border-radius:50%;border:4px solid rgba(255,255,255,.88);box-shadow:0 0 0 4px rgba(255,255,255,.18),0 8px 24px #0008;background-size:cover;background-position:center}
+.player .now-meta{min-width:0;flex:1}
+.player .now-meta b{font:700 21px 'Space Grotesk';max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s}
+.player .now-meta small{font-size:15px;color:#d1c6d7;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player .player-center{width:39%;max-width:none;min-width:240px;margin:0 auto}
+.player .controls{gap:22px;height:66px}
+.player .controls .play-button{width:72px;height:72px;border-radius:50%;background:#fff;color:#17121b;box-shadow:0 6px 24px #0005;transition:transform .18s,box-shadow .18s}
+.player .controls .play-button:hover{transform:scale(1.07);box-shadow:0 0 0 7px #ffffff22}
+.player .controls .icon-btn,.player .controls .control-on{color:#f4eaf9;padding:9px}
+.player .progress-line{gap:11px;font-size:10px;color:#d0c5d5}
+.player .progress-line input{accent-color:#d39aff}
+.player .player-right{width:23%;min-width:130px;gap:5px}
+.player .player-right .icon-btn{color:#e8d9ef;padding:8px}
+.player .player-right .volume{width:66px}
+.player .player-right .speed-select{background:rgba(255,255,255,.12);border-color:#ffffff35;color:#fff}
+.now-playing-open{cursor:pointer}
+@media(max-width:1150px){.player{width:calc(100vw - 240px);min-width:650px;padding:12px 20px;gap:10px}.player .mini-cover{width:68px;height:68px;min-width:68px}.player .now-meta b{font-size:17px}.player .now-meta small{font-size:12px}.player .controls{gap:10px}.player .controls .play-button{width:60px;height:60px}.player .player-right .volume{display:none}}
+@media(max-width:760px){.player{width:calc(100vw - 24px);min-width:0;height:98px;bottom:10px;padding:9px 14px;border-radius:32px}.player .now-playing{width:34%;min-width:0;gap:8px}.player .mini-cover{width:52px;height:52px;min-width:52px}.player .now-meta b{font-size:12px}.player .now-meta small{font-size:10px}.player .player-center{width:43%;min-width:0}.player .controls{gap:5px;height:48px}.player .controls .play-button{width:46px;height:46px}.player .progress-line{font-size:8px;gap:5px}.player .player-right{width:auto;min-width:0}.player .player-right .speed-select,.player .player-right .volume,.player .player-right button[title="Playlists"]{display:none}}
+
+
+/* Heart Beats v1.0.2 — complete theme propagation */
+.app{--accent:var(--hb-accent,#a855f7);--accent-soft:color-mix(in srgb,var(--accent) 18%,transparent);--accent-border:color-mix(in srgb,var(--accent) 38%,transparent);--surface:#14121a;--surface-raised:#1b1722;--surface-soft:#100e15;--line:#302938;--text:#f5f1f8;--muted:#a49bab;--canvas:#09090d;color:var(--text);background:var(--canvas);transition:background .25s,color .25s}
+.app[data-theme="midnight"]{--canvas:#09090d;--surface:#14121a;--surface-raised:#1b1722;--surface-soft:#100e15;--line:#302938;--text:#f5f1f8;--muted:#a49bab}
+.app[data-theme="amoled"]{--canvas:#000;--surface:#080808;--surface-raised:#111;--surface-soft:#050505;--line:#252525;--text:#f7f7f7;--muted:#a1a1a1}
+.app[data-theme="light"]{--canvas:#f4f2f7;--surface:#fff;--surface-raised:#f0edf5;--surface-soft:#faf9fc;--line:#ded8e7;--text:#211a2a;--muted:#71697c}
+.app[data-theme="light"] .sidebar{background:#fbfaff;border-color:var(--line)}
+.app[data-theme="light"] .brand span,.app[data-theme="light"] .profile small,.app[data-theme="light"] .nav-item,.app[data-theme="light"] .nav-item svg,.app[data-theme="light"] .subtle,.app[data-theme="light"] .track-info small,.app[data-theme="light"] .track-album,.app[data-theme="light"] .main footer{color:var(--muted)}
+.app[data-theme="light"] .profile,.app[data-theme="light"] .searchbox,.app[data-theme="light"] .source-card,.app[data-theme="light"] .settings-card,.app[data-theme="light"] .track-list,.app[data-theme="light"] .empty-state{background:var(--surface);border-color:var(--line);color:var(--text)}
+.app[data-theme="light"] .profile b,.app[data-theme="light"] .source-card b,.app[data-theme="light"] .empty-state b,.app[data-theme="light"] .settings-card b,.app[data-theme="light"] .track-info b,.app[data-theme="light"] .section-heading h2{color:var(--text)}
+.app[data-theme="light"] .searchbox input{color:var(--text)}
+.app[data-theme="light"] .searchbox kbd{border-color:var(--line);color:var(--muted)}
+.app[data-theme="light"] .upgrade{background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 13%,white),white);border-color:var(--accent-border)}
+.app[data-theme="light"] .upgrade p{color:#71697c}
+.app[data-theme="light"] .nav-item:hover,.app[data-theme="light"] .nav-item.selected{background:var(--accent-soft);color:var(--accent)}
+.app[data-theme="light"] .track-row{border-color:var(--line)}
+.app[data-theme="light"] .track-row:hover,.app[data-theme="light"] .playing-row{background:var(--accent-soft)}
+.app[data-theme="light"] .topbar{border-color:var(--line)}
+.app[data-theme="light"] .hero{background:linear-gradient(110deg,color-mix(in srgb,var(--accent) 15%,white),#fff);border-color:var(--accent-border)}
+.app[data-theme="light"] .hero h1{color:#211a2a}.app[data-theme="light"] .hero p{color:#71697c}
+.app .profile{background:var(--surface);border-color:var(--line);transition:background .25s,border-color .25s}
+.app .avatar,.app .user-dot{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#322044));box-shadow:0 5px 18px color-mix(in srgb,var(--accent) 25%,transparent)}
+.app .upgrade{background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 18%,#171321),var(--surface-raised));border-color:var(--accent-border);transition:background .25s,border-color .25s}
+.app .upgrade>svg,.app .eyebrow,.app .empty-icon,.app .source-logo,.app .text-button,.app .row-play{color:var(--accent)}
+.app .upgrade button,.app .primary{background:var(--accent);color:white;box-shadow:0 5px 20px color-mix(in srgb,var(--accent) 22%,transparent)}
+.app .searchbox{background:var(--surface);border-color:var(--line);color:var(--muted);transition:background .25s,border-color .25s}
+.app .searchbox:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.app .searchbox input{color:var(--text)}
+.app .searchbox kbd{border-color:var(--line);color:var(--muted)}
+.app .nav-item:hover,.app .nav-item.selected{background:var(--accent-soft);color:var(--text)}
+.app .nav-item.selected{box-shadow:inset 2px 0 var(--accent)}
+.app .nav-item.selected svg,.app .control-on,.app .icon-btn:hover{color:var(--accent)}
+.app .empty-state{background:var(--surface-soft);border-color:var(--line)}
+.app .empty-icon{background:var(--accent-soft)}
+.app .source-card{background:var(--surface);border-color:var(--line)}
+.app .source-card:hover,.app .source-card.active{border-color:var(--accent);background:var(--surface-raised)}
+.app .source-logo{background:var(--accent-soft)}
+.app .settings-card,.app .track-list{background:var(--surface);border-color:var(--line)}
+.app .secondary{background:var(--surface-raised);border-color:var(--line);color:var(--text)}
+.app input[type=range],.app .eq-sliders input,.app .immersive-setting input[type=range]{accent-color:var(--accent)}
+.app .player{border-color:var(--accent-border)}
+.app .player .progress-line input{accent-color:var(--accent)}
+.app .player .controls .play-button{color:var(--accent)}
+.app .speed-select{background:var(--surface-raised);border-color:var(--line);color:var(--text)}
+.theme-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 19px}
+.theme-choice{min-width:0;text-align:left;padding:10px;border:1px solid var(--line);border-radius:11px;background:var(--surface-soft);color:var(--text);display:flex;flex-direction:column;gap:5px;transition:.2s}
+.theme-choice.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.theme-choice b{font-size:11px}.theme-choice small{font-size:9px;color:var(--muted)}
+.theme-preview{height:48px;border-radius:7px;display:flex;align-items:flex-end;gap:4px;padding:6px;margin-bottom:4px;border:1px solid var(--line)}
+.theme-preview i{height:7px;flex:1;border-radius:3px;background:var(--accent)}.theme-preview i:nth-child(2){height:19px;opacity:.7}.theme-preview i:nth-child(3){height:12px;opacity:.45}
+.theme-preview.midnight{background:linear-gradient(120deg,#171222,#30213d)}.theme-preview.amoled{background:#000}.theme-preview.light{background:linear-gradient(120deg,#fff,#e9e4f1)}
+.accent-picker{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.accent-picker>b{font-size:11px}.accent-swatches{display:flex;align-items:center;gap:9px}.accent-swatches button{width:21px;height:21px;border-radius:50%;border:2px solid transparent;outline:2px solid transparent;outline-offset:2px}.accent-swatches button.chosen{outline-color:var(--text)}.custom-accent{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:7px}.custom-accent input{width:27px;height:25px;padding:0;border:0;background:transparent;cursor:pointer}
+
+
+/* Heart Beats v1.0.3: one compact pill player only. The old detached mini-window is removed. */
+.player{position:fixed!important;left:calc(50% + 122px)!important;right:auto!important;bottom:18px!important;transform:translateX(-50%)!important;width:min(650px,calc(100vw - 300px))!important;min-width:0!important;height:82px!important;padding:10px 18px!important;display:flex!important;align-items:center!important;gap:16px!important;border:1px solid var(--accent-border)!important;border-radius:999px!important;background:color-mix(in srgb,var(--surface) 84%,transparent)!important;background-image:none!important;box-shadow:0 12px 36px #0006,inset 0 1px #ffffff18!important;backdrop-filter:blur(22px) saturate(1.25)!important;z-index:50!important;overflow:hidden!important}
+.player:before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,var(--accent-soft),transparent 52%);pointer-events:none}
+.player>*{position:relative;z-index:1}
+.pill-track{display:flex;align-items:center;gap:12px;min-width:0;flex:1;background:transparent;text-align:left;padding:0;color:var(--text);cursor:pointer}
+.pill-cover{width:54px;height:54px;flex:0 0 54px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--surface-raised));background-position:center;background-size:cover;border:2px solid color-mix(in srgb,var(--text) 82%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--text) 12%,transparent);color:white}
+.pill-meta{display:flex;flex-direction:column;min-width:0;gap:5px}.pill-meta b{font:700 14px 'Space Grotesk';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pill-meta small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill-controls{display:flex;align-items:center;gap:12px;flex:0 0 auto}.pill-control,.pill-expand{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:transparent;color:var(--text);opacity:.88;transition:background .18s,transform .18s}.pill-control:hover,.pill-expand:hover{background:var(--accent-soft);color:var(--accent);transform:scale(1.06)}
+.pill-play{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--text);color:var(--canvas);box-shadow:0 4px 14px #0003;transition:transform .18s}.pill-play:hover{transform:scale(1.06)}.pill-expand{margin-left:0;color:var(--muted)}
+.pill-progress{position:absolute;bottom:0;left:8%;right:8%;height:2px;background:color-mix(in srgb,var(--text) 18%,transparent);border-radius:3px;overflow:hidden}.pill-progress span{height:100%;display:block;background:var(--accent);transition:width .2s linear}
+.content{padding-bottom:125px}
+@media(max-width:900px){.player{left:50%!important;width:min(610px,calc(100vw - 32px))!important;bottom:12px!important;padding:8px 12px!important;gap:8px!important}.pill-cover{width:46px;height:46px;flex-basis:46px}.pill-meta b{font-size:12px}.pill-meta small{font-size:10px}.pill-controls{gap:4px}.pill-play{width:42px;height:42px}.pill-control{width:30px;height:30px}.pill-expand{display:none}}
+
+/* About and update information */
+.about-update-card{margin-top:22px;padding:17px 18px;border:1px solid color-mix(in srgb,var(--hb-accent) 28%,#302938);border-radius:14px;background:color-mix(in srgb,var(--hb-accent) 5%,#14121a)}
+.about-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.about-heading>div>b{display:block;font-size:14px;margin-top:6px}
+.about-heading p{font-size:10px;color:#928a9d;margin:5px 0 0}
+.about-version{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:color-mix(in srgb,var(--hb-accent) 18%,transparent);border:1px solid color-mix(in srgb,var(--hb-accent) 48%,transparent);color:var(--hb-accent);font-size:12px;font-weight:800;letter-spacing:.3px}
+.about-update-card .settings-divider{margin:15px 0}
+.update-footnote{display:block;color:#898191;font-size:9px;line-height:1.6;margin-top:12px}

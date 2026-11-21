@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   Home, Compass, Search, Library, ListMusic, Heart, Clock3, Plus, Play, Pause,
   SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Music2, Radio,
@@ -26,6 +26,8 @@ export default function App() {
   const [muted, setMuted] = useState(false);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState("Home");
+  const [theme, setTheme] = useState<"midnight"|"amoled"|"light">(() => readStore("hb.theme", "midnight"));
+  const [accent, setAccent] = useState(() => readStore("hb.accent", "#a855f7"));
   const [source, setSource] = useState("Local music");
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState(false);
@@ -43,16 +45,18 @@ export default function App() {
   const [playbackRate, setPlaybackRate] = useState<number>(() => readStore("hb.playbackRate", 1));
   const [sleepMinutes, setSleepMinutes] = useState<number>(0);
   const [sleepRemaining, setSleepRemaining] = useState<number>(0);
-  const [miniOpen, setMiniOpen] = useState(false);
   const [immersiveOpen, setImmersiveOpen] = useState(false);
   const [lyricsByPath, setLyricsByPath] = useState<Record<string, {time:number;text:string}[]>>(() => readStore("hb.lyrics", {}));
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [lyricsStatus, setLyricsStatus] = useState("Lyrics not searched");
-  const [updateStatus, setUpdateStatus] = useState<{state:string;message:string;version?:string;percent?:number}>({state:"idle",message:"Updates are checked automatically."});
+  const [updateStatus, setUpdateStatus] = useState<{state:string;message:string;version?:string;percent?:number}>({state:"idle",message:"Ready to check for updates."});
+  const [appVersion, setAppVersion] = useState("1.0.4");
   const sleepTimeout = useRef<number | null>(null);
   const current = tracks[active];
   const sleepLabel = sleepRemaining ? `${Math.floor(sleepRemaining / 60)}:${String(sleepRemaining % 60).padStart(2, "0")}` : "";
 
+  useEffect(() => { localStorage.setItem("hb.theme", JSON.stringify(theme)); }, [theme]);
+  useEffect(() => { localStorage.setItem("hb.accent", JSON.stringify(accent)); }, [accent]);
   useEffect(() => { localStorage.setItem("hb.tracks", JSON.stringify(tracks)); }, [tracks]);
   useEffect(() => { localStorage.setItem("hb.liked", JSON.stringify(liked)); }, [liked]);
   useEffect(() => { localStorage.setItem("hb.recent", JSON.stringify(recent)); }, [recent]);
@@ -122,27 +126,15 @@ export default function App() {
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [current?.path]);
 
-  // Listen for automatic update checks and background download progress.
+  // Show the installed package version and listen for updater progress.
+  useEffect(() => { void window.echo.getAppVersion().then(setAppVersion).catch(() => setAppVersion("1.0.4")); }, []);
   useEffect(() => window.echo.onUpdateStatus(status => setUpdateStatus(status)), []);
-  useEffect(() => window.echo.onMiniExpand(() => setImmersiveOpen(true)), []);
-  useEffect(() => window.echo.onMiniStateRequest(() => window.echo.miniState({ title: current?.name || "", artist: current?.artist || "", artwork: current?.artwork || "", playing, time, duration })), [current?.name, playing, time, duration]);
   useEffect(() => { if (immersiveOpen) document.body.classList.add("hb-immersive"); else document.body.classList.remove("hb-immersive"); return () => document.body.classList.remove("hb-immersive"); }, [immersiveOpen]);
 
   async function checkForUpdates() {
     const status = await window.echo.checkForUpdates();
     setUpdateStatus(status);
   }
-
-  // Keep the independent native mini-player updated with the real audio clock.
-  useEffect(() => {
-    window.echo.miniState({ title: current?.name || "", artist: current?.artist || "", artwork: current?.artwork || "", playing, time, duration });
-  }, [current?.name, playing, time, duration]);
-  useEffect(() => window.echo.onMiniControl(action => {
-    if (action === "toggle") toggle();
-    if (action === "next") next();
-    if (action === "previous") previous();
-  }), [playing, active, tracks, shuffle, repeat, time]);
-
 
   async function importLyrics() {
     if (!current) return;
@@ -282,7 +274,7 @@ export default function App() {
     return list.filter(t => t.name.toLowerCase().includes(query.toLowerCase()));
   }, [tracks, liked, recent, tab, query, playlists, selectedPlaylist]);
 
-  return <div className="app">
+  return <div className="app" data-theme={theme} style={{"--hb-accent": accent} as CSSProperties}>
     <audio ref={audio} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
     <aside className="sidebar">
       <div className="brand"><div className="brand-icon"><AudioLines size={23}/></div><div><b>heart beats</b><span>DESKTOP PLAYER</span></div></div>
@@ -304,7 +296,7 @@ export default function App() {
           <button className={`source-card local ${source==="Local music"?"active":""}`} onClick={addFiles}><div className="source-logo"><Disc3 size={25}/></div><div><b>Local music</b><small>{tracks.length} tracks in your library</small></div><span className="source-status connected">Ready</span></button>
         </div></section>
         <section className="music-section"><div className="section-heading"><div><div className="eyebrow muted">{tab==="Liked Songs"?"YOUR FAVOURITES":tab==="Recently Played"?"LISTEN AGAIN":tab==="Playlists"?"YOUR MIXES":"YOUR COLLECTION"}</div><h2>{tab==="Search"?"Search results":tab==="Liked Songs"?"Liked songs":tab==="Recently Played"?"Recently played":tab==="Playlists"?"Your playlists":tab==="Settings"?"Settings":"Your music"}</h2></div><div className="heading-actions">{tab==="Playlists"&&<button className="text-button" onClick={createPlaylist}><Plus size={15}/> New playlist</button>}<button className="text-button" onClick={addFiles}><Plus size={15}/> Import tracks</button></div></div>
-          {tab==="Settings" ? <div className="settings-card"><div className="settings-title"><div><b>Audio equaliser</b><p>Five-band tone control for local audio playback.</p></div><label className="switch-label"><input type="checkbox" checked={eqEnabled} onChange={e=>setEqEnabled(e.target.checked)}/> Enabled</label></div><div className="eq-presets">{["Flat","Bass","Treble","Vocal","Rock","Electronic"].map(name=><button className={eqPreset===name?"preset-active":""} key={name} onClick={()=>applyPreset(name)}>{name}</button>)}</div><div className="eq-sliders">{["60 Hz","250 Hz","1 kHz","4 kHz","12 kHz"].map((label,i)=><label key={label}><span>{label}</span><input type="range" min="-12" max="12" value={eqGains[i]||0} disabled={!eqEnabled} onChange={e=>{const next=[...eqGains];next[i]=Number(e.target.value);setEqGains(next);setEqPreset("Custom");}}/><small>{(eqGains[i]>0?"+":"")+(eqGains[i]||0)} dB</small></label>)}</div><div className="settings-title visualizer-title"><div><b>Audio visualiser</b><p>Live frequency bars from the local player.</p></div><label className="switch-label"><input type="checkbox" checked={visualizerOn} onChange={e=>setVisualizerOn(e.target.checked)}/> Show</label></div>{visualizerOn&&<canvas className="visualizer-canvas" ref={canvas}/>}<div className="settings-divider"/><b>Playback shortcuts</b><p><kbd>Space</kbd> Play / pause &nbsp; <kbd>←</kbd> Rewind 5 seconds &nbsp; <kbd>→</kbd> Forward 5 seconds</p>
+          {tab==="Settings" ? <div className="settings-card"><section className="appearance-settings"><div className="settings-title"><div><b>Appearance &amp; themes</b><p>Choose a complete colour scheme for your workspace.</p></div></div><div className="theme-options">{([{id:"midnight",label:"Midnight",hint:"Soft dark"},{id:"amoled",label:"AMOLED",hint:"Pure black"},{id:"light",label:"Light",hint:"Bright and clean"}] as const).map(item=><button key={item.id} className={`theme-choice ${theme===item.id?"active":""}`} onClick={()=>setTheme(item.id)}><span className={`theme-preview ${item.id}`}><i/><i/><i/></span><b>{item.label}</b><small>{item.hint}</small></button>)}</div><div className="accent-picker"><b>Accent colour</b><div className="accent-swatches">{[{name:"Violet",value:"#a855f7"},{name:"Rose",value:"#ec6b9b"},{name:"Ocean",value:"#3999e8"},{name:"Emerald",value:"#26b887"},{name:"Amber",value:"#e2a63d"},{name:"Ice",value:"#55c5d8"}].map(c=><button key={c.value} title={c.name} aria-label={c.name} className={accent===c.value?"chosen":""} style={{background:c.value}} onClick={()=>setAccent(c.value)}/>)}</div><label className="custom-accent">Custom <input type="color" value={accent} onChange={e=>setAccent(e.target.value)}/></label></div></section><div className="settings-divider"/><div className="settings-title"><div><b>Audio equaliser</b><p>Five-band tone control for local audio playback.</p></div><label className="switch-label"><input type="checkbox" checked={eqEnabled} onChange={e=>setEqEnabled(e.target.checked)}/> Enabled</label></div><div className="eq-presets">{["Flat","Bass","Treble","Vocal","Rock","Electronic"].map(name=><button className={eqPreset===name?"preset-active":""} key={name} onClick={()=>applyPreset(name)}>{name}</button>)}</div><div className="eq-sliders">{["60 Hz","250 Hz","1 kHz","4 kHz","12 kHz"].map((label,i)=><label key={label}><span>{label}</span><input type="range" min="-12" max="12" value={eqGains[i]||0} disabled={!eqEnabled} onChange={e=>{const next=[...eqGains];next[i]=Number(e.target.value);setEqGains(next);setEqPreset("Custom");}}/><small>{(eqGains[i]>0?"+":"")+(eqGains[i]||0)} dB</small></label>)}</div><div className="settings-title visualizer-title"><div><b>Audio visualiser</b><p>Live frequency bars from the local player.</p></div><label className="switch-label"><input type="checkbox" checked={visualizerOn} onChange={e=>setVisualizerOn(e.target.checked)}/> Show</label></div>{visualizerOn&&<canvas className="visualizer-canvas" ref={canvas}/>}<div className="settings-divider"/><b>Playback shortcuts</b><p><kbd>Space</kbd> Play / pause &nbsp; <kbd>←</kbd> Rewind 5 seconds &nbsp; <kbd>→</kbd> Forward 5 seconds</p>
             <div className="settings-divider"/>
             <div className="settings-title"><div><b>Sleep timer</b><p>Stop playback automatically after the selected time.</p></div>
               <div className="timer-controls"><select value={sleepMinutes} onChange={e=>setSleepMinutes(Number(e.target.value))}><option value={0}>Off</option><option value={5}>5 minutes</option><option value={10}>10 minutes</option><option value={15}>15 minutes</option><option value={30}>30 minutes</option><option value={45}>45 minutes</option><option value={60}>60 minutes</option><option value={90}>90 minutes</option></select>{sleepLabel&&<span className="timer-countdown">{sleepLabel} left</span>}</div>
@@ -312,15 +304,29 @@ export default function App() {
             <div className="settings-divider"/>
             <b>Library storage</b><p>Your imported file locations, favourites and playlists are saved locally in this Windows user profile. Moving or deleting the original audio files can break their library entries.</p>
             <div className="settings-divider"/>
-            <div className="settings-title"><div><b>Heart Beats updates</b><p>{updateStatus.message}</p>{typeof updateStatus.percent === "number" && <small>{updateStatus.percent}% downloaded</small>}</div><div className="timer-controls">{updateStatus.state === "downloaded" ? <button className="primary" onClick={()=>void window.echo.installUpdate()}>Restart &amp; install</button> : <button className="secondary" onClick={()=>void checkForUpdates()} disabled={updateStatus.state === "checking" || updateStatus.state === "downloading"}>Check for updates</button>}</div></div>
+            <section className="about-update-card">
+              <div className="about-heading"><div><span className="eyebrow muted">APPLICATION</span><b>About Heart Beats</b><p>Personal music, your way.</p></div><span className="about-version">v{appVersion}</span></div>
+              <div className="settings-divider"/>
+              <div className="settings-title"><div><b>Software updates</b><p>{updateStatus.message}</p>{typeof updateStatus.percent === "number" && <small>{updateStatus.percent}% downloaded</small>}{updateStatus.version && updateStatus.state !== "idle" && <small>Latest version: {updateStatus.version}</small>}</div><div className="timer-controls">{updateStatus.state === "downloaded" ? <button className="primary" onClick={()=>void window.echo.installUpdate()}>Restart &amp; install</button> : <button className="secondary" onClick={()=>void checkForUpdates()} disabled={updateStatus.state === "checking" || updateStatus.state === "downloading"}> {updateStatus.state === "checking" ? "Checking…" : updateStatus.state === "downloading" ? "Downloading…" : "Check for updates"}</button>}</div></div>
+              <small className="update-footnote">Update checks use the Heart Beats GitHub Releases feed. An update is available only after a compatible release and installer metadata have been published.</small>
+            </section>
             </div> : tab==="Playlists" && playlists.length===0 ? <div className="empty-state"><div className="empty-icon"><ListMusic size={25}/></div><b>No playlists yet</b><p>Create a playlist and add tracks from your library.</p><button className="secondary" onClick={createPlaylist}><Plus size={16}/> Create playlist</button></div> : visible.length ? <div className="track-list">{visible.map((t,i)=><div className={`track-row ${current?.path===t.path?"playing-row":""}`} key={t.path}><button className="track-cover" onClick={()=>setActive(tracks.indexOf(t))}>{current?.path===t.path&&playing?<AudioLines size={18}/>:<Music2 size={18}/>}</button><div className="track-info" onDoubleClick={()=>setActive(tracks.indexOf(t))}><b>{t.name}</b><small>Local audio file</small></div><span className="track-album">{(t.size/1048576).toFixed(1)} MB</span><button className="row-action" title="Add to playlist" onClick={()=>addToPlaylist(t)}><ListPlus size={16}/></button><button className={`row-action ${liked.includes(t.path)?"liked":""}`} title="Like" onClick={()=>toggleLike(t)}><Heart size={16} fill={liked.includes(t.path)?"currentColor":"none"}/></button><button className="row-action" title="Remove from library" onClick={()=>removeTrack(t)}><Trash2 size={15}/></button><button className="row-play" onClick={()=>setActive(tracks.indexOf(t))}><Play size={16}/></button></div>)}</div> : <div className="empty-state"><div className="empty-icon"><FolderOpen size={25}/></div><b>{query?"No matching tracks":"Your library starts here"}</b><p>{query?"Try another search term.":"Import audio files from your PC. Your music stays on your device."}</p><button className="secondary" onClick={addFiles}><Plus size={16}/> Browse audio files</button></div>}
         </section>
-        <footer>HEART BEATS <span>•</span> MADE FOR THE WAY YOU LISTEN <span className="version">PREVIEW 0.9.0</span></footer>
+        <footer>HEART BEATS <span>•</span> MADE FOR THE WAY YOU LISTEN <span className="version">VERSION {appVersion}</span></footer>
       </div>
     </main>
-    <div className="player"><div className="now-playing">{current?<><div className="mini-cover" style={current.artwork?{backgroundImage:`url("${current.artwork}")`,backgroundSize:"cover",backgroundPosition:"center"}:undefined}>{!current.artwork&&<Music2 size={20}/>}</div><div className="now-meta"><b>{current.name}</b><small>{current.artist || "Unknown artist"}</small></div><button className={`icon-btn ${liked.includes(current.path)?"liked":""}`} onClick={()=>toggleLike(current)}><Heart size={17} fill={liked.includes(current.path)?"currentColor":"none"}/></button></>:<><div className="mini-cover idle"><AudioLines size={20}/></div><div className="now-meta"><b>Nothing playing</b><small>Choose a track to begin</small></div></>}</div>
-      <div className="player-center"><div className="controls"><button className={shuffle?"control-on":"icon-btn"} onClick={()=>setShuffle(!shuffle)} title="Shuffle"><Shuffle size={16}/></button><button className="icon-btn" onClick={previous}><SkipBack size={19}/></button><button className="play-button" onClick={toggle}>{playing?<Pause size={19} fill="currentColor"/>:<Play size={19} fill="currentColor"/>}</button><button className="icon-btn" onClick={next}><SkipForward size={19}/></button><button className={repeat?"control-on":"icon-btn"} onClick={()=>setRepeat(!repeat)} title="Repeat current track"><Repeat size={16}/></button></div><div className="progress-line"><span>{fmt(time)}</span><input type="range" min="0" max={duration||100} value={Math.min(time,duration||100)} onChange={e=>{if(audio.current)audio.current.currentTime=Number(e.target.value);}}/><span>{fmt(duration)}</span></div></div>
-      <div className="player-right"><button className="icon-btn" onClick={()=>setLyricsOpen(v=>!v)} title="Lyrics"><AudioLines size={18}/></button><button className="icon-btn" onClick={()=>void window.echo.openMini()} title="Open floating mini player"><Disc3 size={18}/></button><button className="icon-btn" onClick={()=>setTab("Playlists")} title="Playlists"><ListPlus size={18}/></button><select className="speed-select" aria-label="Playback speed" title="Playback speed" value={playbackRate} onChange={e=>setPlaybackRate(Number(e.target.value))}><option value={0.75}>0.75×</option><option value={1}>1×</option><option value={1.25}>1.25×</option><option value={1.5}>1.5×</option><option value={1.75}>1.75×</option><option value={2}>2×</option></select><button className="icon-btn" onClick={()=>setMuted(!muted)}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>}</button><input className="volume" type="range" min="0" max="1" step=".01" value={muted?0:volume} onChange={e=>{setVolume(Number(e.target.value));setMuted(false);}}/></div>
+    <div className="player" aria-label="Floating music player">
+      <button className="pill-track" onClick={()=>setImmersiveOpen(true)} title="Open full player">
+        <span className="pill-cover" style={current?.artwork?{backgroundImage:`url("${current.artwork}")`}:undefined}>{!current?.artwork&&<Music2 size={19}/>}</span>
+        <span className="pill-meta"><b>{current?.name || "Nothing playing"}</b><small>{current?.artist || "Choose a track to begin"}</small></span>
+      </button>
+      <div className="pill-controls">
+        <button className="pill-control" onClick={previous} title="Previous track" aria-label="Previous track"><SkipBack size={19}/></button>
+        <button className="pill-play" onClick={toggle} title={playing?"Pause":"Play"} aria-label={playing?"Pause":"Play"}>{playing?<Pause size={21} fill="currentColor"/>:<Play size={21} fill="currentColor"/>}</button>
+        <button className="pill-control" onClick={next} title="Next track" aria-label="Next track"><SkipForward size={19}/></button>
+      </div>
+      <button className="pill-expand" onClick={()=>setImmersiveOpen(true)} title="Open full player" aria-label="Open full player"><MoreHorizontal size={20}/></button>
+      <div className="pill-progress"><span style={{width:`${duration?Math.min(100,(time/duration)*100):0}%`}}/></div>
     </div>
     {lyricsOpen && <section className="lyrics-panel">
       <div className="panel-head"><div><span className="eyebrow muted">SYNCHRONISED LYRICS</span><b>{current?.name || "No track selected"}</b></div><button className="icon-btn" onClick={()=>setLyricsOpen(false)}><X size={17}/></button></div>

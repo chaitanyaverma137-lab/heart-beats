@@ -1,6 +1,6 @@
 {
   "name": "heart-beats",
-  "version": "0.9.0",
+  "version": "1.0.4",
   "private": true,
   "description": "Heart Beats - a personal desktop music player",
   "main": "electron/main.cjs",

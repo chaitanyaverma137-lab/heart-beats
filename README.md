@@ -1,18 +1,24 @@
-# Heart Beats v0.9.0
+# Heart Beats v1.0.4
 
-## Reference-inspired player update
-- Floating mini-player is now a wide, horizontal, always-on-top pill with circular album artwork, title, artist, previous, play/pause and next controls.
-- Clicking the artwork or track information opens the full-screen Now Playing view.
-- The full-screen view keeps playback/settings on the left and synced lyrics on the right. Album art is shown when embedded in the audio file.
-- Audio tags are read locally with `music-metadata`; files without embedded artwork use the Heart Beats fallback artwork.
-- GitHub update publishing is configured for `chaitanyaverma137-lab/heart-beats`.
+A personal Windows desktop music player built with Electron, React, Vite and TypeScript.
 
-## Build on Windows
-1. Install Node.js LTS and Git.
-2. Extract this ZIP and open a terminal in the project folder.
-3. Run `npm install` then `npm run dist`.
-4. The NSIS installer is created in `release/`.
+## v1.0.4 changes
+- Restored a dedicated **About Heart Beats** panel in Settings.
+- Displays the installed application version dynamically from Electron (`app.getVersion()`), rather than a hard-coded label.
+- Restored a clear **Check for updates** action, updater status, download progress, latest version information, and **Restart & install** action.
+- Retains GitHub Releases update configuration for `chaitanyaverma137-lab/heart-beats`.
 
-To publish an update, create a GitHub Release and upload the generated installer plus the `latest.yml` and blockmap files from `release/`. Automatic updates require a published release and a signed-in GitHub repository with the matching release assets.
+## Build
 
-This source archive has not been fully built or runtime-tested on Windows in this environment.
+```bash
+npm install
+npm run dist
+```
+
+The Windows NSIS installer and updater metadata are generated in `release/`.
+
+## Publishing updates
+
+Publish a non-draft GitHub Release with the Windows installer and the matching `latest.yml` (and `.blockmap` when generated). The package is configured to use GitHub Releases through `electron-updater`. See the [electron-builder auto-update guide](https://www.electron.build/docs/features/auto-update/) for release asset requirements.
+
+Update checks are available in packaged builds. Development builds show a development-mode status rather than querying the release feed.
