@@ -6,7 +6,7 @@ import {
   ListPlus, X, MoreHorizontal
 } from "lucide-react";
 
-type Track = { name: string; path: string; url: string; size: number };
+type Track = { name: string; artist?: string; artwork?: string; path: string; url: string; size: number };
 type Playlist = { id: string; name: string; paths: string[] };
 const fmt = (n: number) => `${Math.floor((n || 0) / 60)}:${String(Math.floor((n || 0) % 60)).padStart(2, "0")}`;
 const readStore = <T,>(key: string, fallback: T): T => {
@@ -125,7 +125,7 @@ export default function App() {
   // Listen for automatic update checks and background download progress.
   useEffect(() => window.echo.onUpdateStatus(status => setUpdateStatus(status)), []);
   useEffect(() => window.echo.onMiniExpand(() => setImmersiveOpen(true)), []);
-  useEffect(() => window.echo.onMiniStateRequest(() => window.echo.miniState({ title: current?.name || "", playing, time, duration })), [current?.name, playing, time, duration]);
+  useEffect(() => window.echo.onMiniStateRequest(() => window.echo.miniState({ title: current?.name || "", artist: current?.artist || "", artwork: current?.artwork || "", playing, time, duration })), [current?.name, playing, time, duration]);
   useEffect(() => { if (immersiveOpen) document.body.classList.add("hb-immersive"); else document.body.classList.remove("hb-immersive"); return () => document.body.classList.remove("hb-immersive"); }, [immersiveOpen]);
 
   async function checkForUpdates() {
@@ -135,7 +135,7 @@ export default function App() {
 
   // Keep the independent native mini-player updated with the real audio clock.
   useEffect(() => {
-    window.echo.miniState({ title: current?.name || "", playing, time, duration });
+    window.echo.miniState({ title: current?.name || "", artist: current?.artist || "", artwork: current?.artwork || "", playing, time, duration });
   }, [current?.name, playing, time, duration]);
   useEffect(() => window.echo.onMiniControl(action => {
     if (action === "toggle") toggle();
@@ -315,10 +315,10 @@ export default function App() {
             <div className="settings-title"><div><b>Heart Beats updates</b><p>{updateStatus.message}</p>{typeof updateStatus.percent === "number" && <small>{updateStatus.percent}% downloaded</small>}</div><div className="timer-controls">{updateStatus.state === "downloaded" ? <button className="primary" onClick={()=>void window.echo.installUpdate()}>Restart &amp; install</button> : <button className="secondary" onClick={()=>void checkForUpdates()} disabled={updateStatus.state === "checking" || updateStatus.state === "downloading"}>Check for updates</button>}</div></div>
             </div> : tab==="Playlists" && playlists.length===0 ? <div className="empty-state"><div className="empty-icon"><ListMusic size={25}/></div><b>No playlists yet</b><p>Create a playlist and add tracks from your library.</p><button className="secondary" onClick={createPlaylist}><Plus size={16}/> Create playlist</button></div> : visible.length ? <div className="track-list">{visible.map((t,i)=><div className={`track-row ${current?.path===t.path?"playing-row":""}`} key={t.path}><button className="track-cover" onClick={()=>setActive(tracks.indexOf(t))}>{current?.path===t.path&&playing?<AudioLines size={18}/>:<Music2 size={18}/>}</button><div className="track-info" onDoubleClick={()=>setActive(tracks.indexOf(t))}><b>{t.name}</b><small>Local audio file</small></div><span className="track-album">{(t.size/1048576).toFixed(1)} MB</span><button className="row-action" title="Add to playlist" onClick={()=>addToPlaylist(t)}><ListPlus size={16}/></button><button className={`row-action ${liked.includes(t.path)?"liked":""}`} title="Like" onClick={()=>toggleLike(t)}><Heart size={16} fill={liked.includes(t.path)?"currentColor":"none"}/></button><button className="row-action" title="Remove from library" onClick={()=>removeTrack(t)}><Trash2 size={15}/></button><button className="row-play" onClick={()=>setActive(tracks.indexOf(t))}><Play size={16}/></button></div>)}</div> : <div className="empty-state"><div className="empty-icon"><FolderOpen size={25}/></div><b>{query?"No matching tracks":"Your library starts here"}</b><p>{query?"Try another search term.":"Import audio files from your PC. Your music stays on your device."}</p><button className="secondary" onClick={addFiles}><Plus size={16}/> Browse audio files</button></div>}
         </section>
-        <footer>HEART BEATS <span>•</span> MADE FOR THE WAY YOU LISTEN <span className="version">PREVIEW 0.8.0</span></footer>
+        <footer>HEART BEATS <span>•</span> MADE FOR THE WAY YOU LISTEN <span className="version">PREVIEW 0.9.0</span></footer>
       </div>
     </main>
-    <div className="player"><div className="now-playing">{current?<><div className="mini-cover"><Music2 size={20}/></div><div className="now-meta"><b>{current.name}</b><small>Local audio</small></div><button className={`icon-btn ${liked.includes(current.path)?"liked":""}`} onClick={()=>toggleLike(current)}><Heart size={17} fill={liked.includes(current.path)?"currentColor":"none"}/></button></>:<><div className="mini-cover idle"><AudioLines size={20}/></div><div className="now-meta"><b>Nothing playing</b><small>Choose a track to begin</small></div></>}</div>
+    <div className="player"><div className="now-playing">{current?<><div className="mini-cover" style={current.artwork?{backgroundImage:`url("${current.artwork}")`,backgroundSize:"cover",backgroundPosition:"center"}:undefined}>{!current.artwork&&<Music2 size={20}/>}</div><div className="now-meta"><b>{current.name}</b><small>{current.artist || "Unknown artist"}</small></div><button className={`icon-btn ${liked.includes(current.path)?"liked":""}`} onClick={()=>toggleLike(current)}><Heart size={17} fill={liked.includes(current.path)?"currentColor":"none"}/></button></>:<><div className="mini-cover idle"><AudioLines size={20}/></div><div className="now-meta"><b>Nothing playing</b><small>Choose a track to begin</small></div></>}</div>
       <div className="player-center"><div className="controls"><button className={shuffle?"control-on":"icon-btn"} onClick={()=>setShuffle(!shuffle)} title="Shuffle"><Shuffle size={16}/></button><button className="icon-btn" onClick={previous}><SkipBack size={19}/></button><button className="play-button" onClick={toggle}>{playing?<Pause size={19} fill="currentColor"/>:<Play size={19} fill="currentColor"/>}</button><button className="icon-btn" onClick={next}><SkipForward size={19}/></button><button className={repeat?"control-on":"icon-btn"} onClick={()=>setRepeat(!repeat)} title="Repeat current track"><Repeat size={16}/></button></div><div className="progress-line"><span>{fmt(time)}</span><input type="range" min="0" max={duration||100} value={Math.min(time,duration||100)} onChange={e=>{if(audio.current)audio.current.currentTime=Number(e.target.value);}}/><span>{fmt(duration)}</span></div></div>
       <div className="player-right"><button className="icon-btn" onClick={()=>setLyricsOpen(v=>!v)} title="Lyrics"><AudioLines size={18}/></button><button className="icon-btn" onClick={()=>void window.echo.openMini()} title="Open floating mini player"><Disc3 size={18}/></button><button className="icon-btn" onClick={()=>setTab("Playlists")} title="Playlists"><ListPlus size={18}/></button><select className="speed-select" aria-label="Playback speed" title="Playback speed" value={playbackRate} onChange={e=>setPlaybackRate(Number(e.target.value))}><option value={0.75}>0.75×</option><option value={1}>1×</option><option value={1.25}>1.25×</option><option value={1.5}>1.5×</option><option value={1.75}>1.75×</option><option value={2}>2×</option></select><button className="icon-btn" onClick={()=>setMuted(!muted)}>{muted?<VolumeX size={18}/>:<Volume2 size={18}/>}</button><input className="volume" type="range" min="0" max="1" step=".01" value={muted?0:volume} onChange={e=>{setVolume(Number(e.target.value));setMuted(false);}}/></div>
     </div>
@@ -332,8 +332,8 @@ export default function App() {
       <div className="immersive-top"><div className="brand-mini"><span>♫</span><b>HEART BEATS</b><small>NOW PLAYING</small></div><button className="immersive-close" onClick={()=>{setImmersiveOpen(false);window.echo.exitPlayerFullscreen();}}><X size={19}/> Close full player</button></div>
       <div className="immersive-grid">
         <section className="immersive-left">
-          <div className={`immersive-art ${playing?"immersive-art-playing":""}`}><div className="art-orbit"/><Disc3 size={104}/><span>♫</span></div>
-          <div className="immersive-track"><h1>{current?.name || "Nothing playing"}</h1><p>Local audio · Heart Beats library</p></div>
+          <div className={`immersive-art ${playing?"immersive-art-playing":""}`} style={current?.artwork?{backgroundImage:`url("${current.artwork}")`}:undefined}><div className="art-orbit"/>{!current?.artwork && <><Disc3 size={104}/><span>♫</span></>}</div>
+          <div className="immersive-track"><h1>{current?.name || "Nothing playing"}</h1><p>{current?.artist || "Unknown artist"} · Heart Beats library</p></div>
           <div className="immersive-progress"><span>{fmt(time)}</span><input type="range" min="0" max={duration||100} value={Math.min(time,duration||100)} onChange={e=>{if(audio.current)audio.current.currentTime=Number(e.target.value);}}/><span>{fmt(duration)}</span></div>
           <div className="immersive-controls"><button className={shuffle?"control-on":"icon-btn"} onClick={()=>setShuffle(!shuffle)} title="Shuffle"><Shuffle/></button><button className="icon-btn" onClick={previous}><SkipBack size={23}/></button><button className="immersive-play" onClick={toggle}>{playing?<Pause size={25}/>:<Play size={25}/>}</button><button className="icon-btn" onClick={next}><SkipForward size={23}/></button><button className={repeat?"control-on":"icon-btn"} onClick={()=>setRepeat(!repeat)} title="Repeat"><Repeat/></button></div>
           <div className="immersive-settings">

@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const { pathToFileURL } = require("url");
 const { autoUpdater } = require("electron-updater");
+const { parseFile } = require("music-metadata");
 
 let mainWindow;
 let miniWindow;
@@ -48,31 +49,23 @@ function setupAutoUpdates() {
 function createMiniWindow() {
   if (miniWindow && !miniWindow.isDestroyed()) { miniWindow.show(); miniWindow.focus(); return; }
   miniWindow = new BrowserWindow({
-    width: 390, height: 174, minWidth: 340, minHeight: 160,
+    width: 900, height: 176, minWidth: 620, minHeight: 150, maxHeight: 220,
     title: "Heart Beats · Floating Player", frame: false, resizable: true,
     alwaysOnTop: true, skipTaskbar: true, transparent: false,
-    backgroundColor: "#100d17",
+    backgroundColor: "#171016",
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false }
   });
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>
-  *{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#17121e,#0d0c12);color:#f8f4fc;font:13px 'Segoe UI',Arial;border:1px solid #64447c;border-radius:16px;overflow:hidden}
-  .shell{padding:13px 15px 12px}.drag{height:27px;position:absolute;top:0;left:0;right:0;-webkit-app-region:drag}.top{position:relative;z-index:2;pointer-events:none}.top button{pointer-events:auto;-webkit-app-region:no-drag}
-  .top{display:flex;align-items:center;justify-content:space-between;height:20px;color:#b98bdb;font-size:9px;font-weight:700;letter-spacing:1.8px}
-  .close{background:transparent;color:#9b90a6;border:0;font-size:20px;cursor:pointer;line-height:18px}
-  .row{display:flex;align-items:center;gap:12px;margin-top:8px;cursor:pointer}
-  .art{width:62px;height:62px;flex:none;border-radius:11px;background:linear-gradient(135deg,#a45bd0,#35234b);display:grid;place-items:center;font-size:29px;box-shadow:0 5px 20px #0008}
-  .meta{min-width:0;flex:1}.title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sub{font-size:10px;color:#9d93a6;margin-top:5px}
-  .controls{display:flex;align-items:center;gap:12px;margin-top:12px}.controls button{width:30px;height:28px;border:0;border-radius:9px;background:#282131;color:#eee;display:grid;place-items:center;cursor:pointer;font-size:15px}
-  .controls .play{width:36px;height:34px;border-radius:50%;background:#e8d9f5;color:#25162e;font-size:17px}
-  .progress{height:3px;background:#3a3042;border-radius:9px;margin-top:10px;overflow:hidden}.bar{height:100%;width:0;background:#c17ce9}
-  .time{display:flex;justify-content:space-between;font-size:9px;color:#92879b;margin-top:4px}
-  .expand-hint{font-size:9px;color:#897b94;margin-left:auto}
-  </style></head><body><div class="drag"></div><div class="shell">
-  <div class="top"><span>HEART BEATS · FLOATING PLAYER</span><button class="close" onclick="window.hbMini.close()">×</button></div>
-  <div class="row" onclick="window.hbMini.expand()"><div class="art">♫</div><div class="meta"><div class="title" id="title">Nothing playing</div><div class="sub" id="state">Your music, always within reach</div><div class="expand-hint">Click artwork or title for full player ↗</div></div></div>
-  <div class="controls"><button onclick="window.hbMini.previous()">|◀</button><button class="play" id="play" onclick="window.hbMini.toggle()">▶</button><button onclick="window.hbMini.next()">▶|</button><span style="flex:1"></span><span id="elapsed" style="font-size:9px;color:#9b90a5">0:00</span></div>
-  <div class="progress"><div class="bar" id="bar"></div></div><div class="time"><span>HEART BEATS</span><span id="total">0:00</span></div></div>
-  <script>const fmt=n=>Math.floor((n||0)/60)+':'+String(Math.floor((n||0)%60)).padStart(2,'0');window.hbMini.onState(s=>{document.getElementById('title').textContent=s.title||'Nothing playing';document.getElementById('state').textContent=s.playing?'Now playing':'Paused';document.getElementById('play').textContent=s.playing?'Ⅱ':'▶';document.getElementById('bar').style.width=(s.duration?100*s.time/s.duration:0)+'%';document.getElementById('elapsed').textContent=fmt(s.time);document.getElementById('total').textContent=fmt(s.duration)});</script></body></html>`;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+  *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#120e13;color:#fff;font:16px 'Segoe UI',Arial}
+  body{padding:7px;background:transparent}.pill{height:100%;width:100%;position:relative;display:flex;align-items:center;gap:24px;padding:16px 28px;border-radius:100px;overflow:hidden;border:2px solid #ffffff55;background:linear-gradient(110deg,#251a1c,#130f12 76%);box-shadow:0 12px 34px #0009,inset 0 1px #ffffff22}
+  .backdrop{position:absolute;inset:-35px;background-position:center;background-size:cover;filter:blur(26px) saturate(1.5);opacity:.48;transform:scale(1.15)}.shade{position:absolute;inset:0;background:linear-gradient(90deg,#140f12a8,#100d11d9 70%)}
+  .drag{position:absolute;inset:0;-webkit-app-region:drag;z-index:1}.cover{position:relative;z-index:2;width:112px;height:112px;flex:none;border-radius:50%;border:5px solid #ffffffd9;box-shadow:0 0 0 5px #ffffff33;object-fit:cover;background:linear-gradient(135deg,#a855f7,#39223e);cursor:pointer;-webkit-app-region:no-drag}
+  .meta{position:relative;z-index:2;min-width:0;flex:1;cursor:pointer;-webkit-app-region:no-drag}.title{font-size:25px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.artist{font-size:19px;color:#d0c5c9;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.state{font-size:10px;color:#c7a9b5;margin-top:6px;letter-spacing:1.2px;text-transform:uppercase}
+  .controls{position:relative;z-index:2;display:flex;align-items:center;gap:20px;-webkit-app-region:no-drag}.controls button{width:64px;height:64px;border-radius:50%;background:transparent;color:#fff;display:grid;place-items:center;font-size:30px;cursor:pointer}.controls button.play{width:92px;height:92px;background:#fff;color:#090909;font-size:38px}.controls button:hover{background:#ffffff22}.controls button.play:hover{background:#eee}
+  .progress{position:absolute;z-index:3;bottom:0;left:8%;right:8%;height:3px;background:#ffffff40;border-radius:8px;overflow:hidden}.bar{height:100%;width:0;background:#fff}.close{position:absolute;z-index:4;right:22px;top:10px;background:#0005;border:0;color:#ffffffa8;border-radius:50%;width:22px;height:22px;font-size:16px;cursor:pointer;-webkit-app-region:no-drag}
+  @media(max-width:700px){.pill{gap:12px;padding:10px 14px}.cover{width:76px;height:76px}.title{font-size:17px}.artist{font-size:13px}.controls{gap:4px}.controls button{width:42px;height:48px;font-size:22px}.controls button.play{width:62px;height:62px;font-size:28px}}
+  </style></head><body><div class="pill"><div class="backdrop" id="backdrop"></div><div class="shade"></div><div class="drag"></div><img class="cover" id="cover" alt="Album artwork" onclick="window.hbMini.expand()"><div class="meta" onclick="window.hbMini.expand()"><div class="title" id="title">Nothing playing</div><div class="artist" id="artist">Your music library</div><div class="state" id="state">Heart Beats</div></div><div class="controls"><button onclick="window.hbMini.previous()" title="Previous">|◀</button><button class="play" id="play" onclick="window.hbMini.toggle()">▶</button><button onclick="window.hbMini.next()" title="Next">▶|</button></div><button class="close" onclick="window.hbMini.close()" title="Close">×</button><div class="progress"><div class="bar" id="bar"></div></div></div>
+  <script>const fmt=n=>Math.floor((n||0)/60)+':'+String(Math.floor((n||0)%60)).padStart(2,'0');window.hbMini.onState(s=>{document.getElementById('title').textContent=s.title||'Nothing playing';document.getElementById('artist').textContent=s.artist||'Heart Beats library';document.getElementById('state').textContent=s.playing?'NOW PLAYING · '+fmt(s.time)+' / '+fmt(s.duration):'PAUSED';document.getElementById('play').textContent=s.playing?'Ⅱ':'▶';document.getElementById('bar').style.width=(s.duration?100*s.time/s.duration:0)+'%';const c=document.getElementById('cover'),b=document.getElementById('backdrop');if(s.artwork){c.src=s.artwork;b.style.backgroundImage='url("'+s.artwork+'")'}else{c.removeAttribute('src');c.style.background='linear-gradient(135deg,#a855f7,#39223e)';b.style.backgroundImage='none'}});</script></body></html>`;
   miniWindow.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
   miniWindow.on("closed", () => { miniWindow = null; });
 }
@@ -125,7 +118,18 @@ app.whenReady().then(() => {
   ipcMain.handle("audio:pick", async () => {
     const result = await dialog.showOpenDialog({ properties: ["openFile", "multiSelections"], filters: [{ name: "Audio", extensions: ["mp3","wav","flac","m4a","aac","ogg","opus","wma"] }] });
     if (result.canceled) return [];
-    return result.filePaths.map(file => ({ name: path.basename(file, path.extname(file)), path: file, url: pathToFileURL(file).href, size: fs.statSync(file).size }));
+    return Promise.all(result.filePaths.map(async file => {
+      const name = path.basename(file, path.extname(file));
+      let artist = "Unknown artist", artwork = "", metadataTitle = "";
+      try {
+        const metadata = await parseFile(file, { skipCovers: false });
+        metadataTitle = metadata.common.title || "";
+        artist = metadata.common.artist || metadata.common.albumartist || artist;
+        const picture = metadata.common.picture?.[0];
+        if (picture?.data) artwork = `data:${picture.format || "image/jpeg"};base64,${picture.data.toString("base64")}`;
+      } catch (error) { console.warn("Could not read audio tags:", file, error.message); }
+      return { name: metadataTitle || name, artist, artwork, path: file, url: pathToFileURL(file).href, size: fs.statSync(file).size };
+    }));
   });
 });
 app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
